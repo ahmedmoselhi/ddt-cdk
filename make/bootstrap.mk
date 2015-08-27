@@ -28,19 +28,17 @@ STMKERNEL_VER = 2.6.32.46-48
 #LIBGCC_VER    = 4.8.3-147
 #GLIBC_VER     = 2.14.1-51
 
-if ENABLE_ENIGMA2
 # 4.8.2
-BINUTILS_VER  = 2.23.2-73
-GCC_VER       = 4.8.2-131
-LIBGCC_VER    = 4.8.2-138
-GLIBC_VER     = 2.14.1-50
-else
+#BINUTILS_VER  = 2.23.2-73
+#GCC_VER       = 4.8.2-131
+#LIBGCC_VER    = 4.8.2-138
+#GLIBC_VER     = 2.14.1-50
+
 # 4.8.4
-BINUTILS_VER = 2.24.51.0.3-76
-GCC_VER = 4.8.4-139
-LIBGCC_VER = 4.8.4-148
-GLIBC_VER = 2.14.1-56
-endif
+BINUTILS_VER  = 2.24.51.0.3-77
+GCC_VER       = 4.8.4-139
+LIBGCC_VER    = 4.8.4-149
+GLIBC_VER     = 2.14.1-56
 
 $(hostprefix)/bin/unpack-rpm.sh:
 	ln -sf $(buildprefix)/scripts/$(shell basename $@) $(hostprefix)/bin
@@ -104,6 +102,7 @@ $(D)/directories:
 	ln -s ../init.d $(targetprefix)/etc/rc.d/init.d
 	$(INSTALL) -d $(targetprefix)/lib/lsb
 	$(INSTALL) -d $(targetprefix)/usr/{bin,lib,local,sbin,share}
+	$(INSTALL) -d $(targetprefix)/usr/lib/pkgconfig
 	$(INSTALL) -d $(targetprefix)/usr/include/linux
 	$(INSTALL) -d $(targetprefix)/usr/include/linux/dvb
 	$(INSTALL) -d $(targetprefix)/usr/local/{bin,sbin,share}

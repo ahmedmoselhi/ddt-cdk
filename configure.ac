@@ -46,7 +46,7 @@ AM_CONDITIONAL(ENABLE_TVHEADEND,test "$enable_tvheadend" = "yes")
 AC_SUBST(TVHEADEND)
 
 AC_ARG_ENABLE(wlandriver,
-	AS_HELP_STRING(--enable-wlandriver, Setting up the CDK to build wlandriver),
+	AS_HELP_STRING(--enable-wlandriver, Setting up the CDK to build WLAN drivers),
 	[case "${enableval}" in
 		yes) WLANDRIVER=wlandriver ;;
 	esac],[enable_wlandriver=no])
@@ -818,6 +818,7 @@ TUXBOX_RULES_MAKE(libogg)
 TUXBOX_RULES_MAKE(libsamplerate)
 TUXBOX_RULES_MAKE(libvorbis)
 TUXBOX_RULES_MAKE(libvorbisidec)
+TUXBOX_RULES_MAKE(libdca)
 
 #
 # contrib libs
@@ -839,7 +840,6 @@ TUXBOX_RULES_MAKE(libsigc_e2)
 TUXBOX_RULES_MAKE(libsigc)
 TUXBOX_RULES_MAKE(glib2)
 TUXBOX_RULES_MAKE(libffi)
-TUXBOX_RULES_MAKE(orc)
 TUXBOX_RULES_MAKE(libiconv)
 TUXBOX_RULES_MAKE(libmng)
 TUXBOX_RULES_MAKE(lcms)
@@ -909,34 +909,42 @@ TUXBOX_RULES_MAKE(wget)
 #
 # python
 #
-TUXBOX_RULES_MAKE(gdata)
-TUXBOX_RULES_MAKE(elementtree)
-TUXBOX_RULES_MAKE(lxml)
-TUXBOX_RULES_MAKE(setuptools)
-TUXBOX_RULES_MAKE(twisted)
-TUXBOX_RULES_MAKE(pilimaging)
 TUXBOX_RULES_MAKE(host_python)
 TUXBOX_RULES_MAKE(python)
-TUXBOX_RULES_MAKE(pycrypto)
-TUXBOX_RULES_MAKE(pyusb)
-TUXBOX_RULES_MAKE(pyopenssl)
-TUXBOX_RULES_MAKE(pythonwifi)
-TUXBOX_RULES_MAKE(pythoncheetah)
-TUXBOX_RULES_MAKE(pythonmechanize)
-TUXBOX_RULES_MAKE(zope_interface)
+TUXBOX_RULES_MAKE(python_gdata)
+TUXBOX_RULES_MAKE(python_elementtree)
+TUXBOX_RULES_MAKE(python_lxml)
+TUXBOX_RULES_MAKE(python_setuptools)
+TUXBOX_RULES_MAKE(python_twisted)
+TUXBOX_RULES_MAKE(python_imaging)
+TUXBOX_RULES_MAKE(python_pycrypto)
+TUXBOX_RULES_MAKE(python_pyusb)
+TUXBOX_RULES_MAKE(python_six)
+TUXBOX_RULES_MAKE(python_cffi)
+TUXBOX_RULES_MAKE(python_enum34)
+TUXBOX_RULES_MAKE(python_pyasn1)
+TUXBOX_RULES_MAKE(python_pyasn1_modules)
+TUXBOX_RULES_MAKE(python_pycparser)
+TUXBOX_RULES_MAKE(python_cryptography)
+TUXBOX_RULES_MAKE(python_pyopenssl)
+TUXBOX_RULES_MAKE(python_wifi)
+TUXBOX_RULES_MAKE(python_cheetah)
+TUXBOX_RULES_MAKE(python_mechanize)
+TUXBOX_RULES_MAKE(python_zope_interface)
 
 #
 # gstreamer
 #
+TUXBOX_RULES_MAKE(orc)
+TUXBOX_RULES_MAKE(gst_gmediarender)
+TUXBOX_RULES_MAKE(gst_plugins_dvbmediasink)
 TUXBOX_RULES_MAKE(gstreamer)
 TUXBOX_RULES_MAKE(gst_plugins_base)
 TUXBOX_RULES_MAKE(gst_plugins_good)
 TUXBOX_RULES_MAKE(gst_plugins_bad)
 TUXBOX_RULES_MAKE(gst_plugins_ugly)
-TUXBOX_RULES_MAKE(gst_ffmpeg)
-TUXBOX_RULES_MAKE(gst_gmediarender)
+TUXBOX_RULES_MAKE(gst_libav)
 TUXBOX_RULES_MAKE(gst_plugins_fluendo_mpegdemux)
-TUXBOX_RULES_MAKE(gst_plugins_dvbmediasink)
 TUXBOX_RULES_MAKE(gst_plugin_subsink)
 
 #
@@ -964,6 +972,7 @@ TUXBOX_RULES_MAKE(libdpfax)
 #
 # Security
 #
+TUXBOX_RULES_MAKE(openssl_e2)
 TUXBOX_RULES_MAKE(openssl)
 TUXBOX_RULES_MAKE(gnutls)
 TUXBOX_RULES_MAKE(nettle)
@@ -1011,7 +1020,6 @@ TUXBOX_RULES_MAKE(glibnetworking)
 #
 # TVHEADEND
 #
-TUXBOX_RULES_MAKE(tvheadend)
 
 #
 # localmacros
@@ -1044,23 +1052,23 @@ AC_MSG_RESULT([
 $ccacheinfo
 summary:
 ----------------------------------------
-ccache support              : $enable_ccache
-target cpu/boxtype          : $CPU_MODEL / $BOXTYPE
-kernelversion               : $KERNELVERSION
+Ccache support              : $enable_ccache
+Target CPU/boxtype          : $CPU_MODEL / $BOXTYPE
+Kernelversion               : $KERNELVERSION
 Patchlevel                  : P0$KERNELLABEL
 DEBUG                       : $enable_debug
-boot prefix                 : $bootprefix
-serversupport               : $serversupport
-host prefix                 : $hostprefix
-cross prefix                : $crossprefix
-target prefix               : $targetprefix
-build prefix                : $buildprefix
-target apps directory       : $appsdir
-driver directory            : $driverdir
-source directory            : $sourcedir
-buildtmp directory          : $buildtmp
-customization directory     : $customizationsdir
-archive directory           : $archivedir
+Boot prefix                 : $bootprefix
+Serversupport               : $serversupport
+Host prefix                 : $hostprefix
+Cross prefix                : $crossprefix
+Target prefix               : $targetprefix
+Build prefix                : $buildprefix
+Target apps directory       : $appsdir
+Driver directory            : $driverdir
+Source directory            : $sourcedir
+Buildtmp directory          : $buildtmp
+Customization directory     : $customizationsdir
+Archive directory           : $archivedir
 Player191                   : $enable_player191
 Multicom324                 : $enable_multicom324
 Multicom406                 : $enable_multicom406

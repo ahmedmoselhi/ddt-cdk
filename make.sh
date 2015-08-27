@@ -165,10 +165,10 @@ case $2 in
 	[1-5]) REPLY=$2;;
 	*)	echo -e "\nKernel:"
 		echo "   1) STM 24 P0209"
-		echo "   2) STM 24 P0211 (recommended)"
-		echo "   3) STM 24 P0214 (experimental)"
-		echo "   4) STM 24 P0215 (experimental)"
-		echo "   5) STM 24 P0217 (experimental)"
+		echo "   2) STM 24 P0211"
+		echo "   3) STM 24 P0214"
+		echo "   4) STM 24 P0215"
+		echo "   5) STM 24 P0217 (recommended)"
 		read -p "Select kernel (1-5)? ";;
 esac
 
@@ -178,7 +178,7 @@ case "$REPLY" in
 	3)  KERNEL="--enable-p0214";;
 	4)  KERNEL="--enable-p0215";;
 	5)  KERNEL="--enable-p0217";;
-	*)  KERNEL="--enable-p0215";;
+	*)  KERNEL="--enable-p0217";;
 esac
 CONFIGPARAM="$CONFIGPARAM $KERNEL"
 
@@ -344,7 +344,7 @@ case $7 in
 		echo "   3) Neutrino"
 		echo "   4) Neutrino (includes WLAN drivers)"
 		echo "   5) Tvheadend"
-		read -p "Select Image to build (1-3)? ";;
+		read -p "Select Image to build (1-5)? ";;
 esac
 
 case "$REPLY" in

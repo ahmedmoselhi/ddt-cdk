@@ -209,7 +209,7 @@ if grep -q "/dev tmpfs" /proc/mounts; then
 				# Fill initially ${devstatic} (nfs)
 				#
 				mount /rom -o rw,remount
-				echo "Making devices in ${devstatic}..."
+				echo "[mountvirtfs] Making devices in ${devstatic}..."
 				domakedev ${devstatic} && \
 					mount /rom -o ro,remount
 			fi

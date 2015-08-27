@@ -54,7 +54,7 @@ $(D)/enigma2-plugins: enigma2_networkbrowser enigma2_openwebif
 #
 # enigma2-openwebif
 #
-$(D)/enigma2_openwebif: $(D)/bootstrap $(D)/python $(D)/pythoncheetah @DEPENDS_enigma2_openwebif@
+$(D)/enigma2_openwebif: $(D)/bootstrap $(D)/python $(D)/python_cheetah @DEPENDS_enigma2_openwebif@
 	[ -d "$(archivedir)/e2openplugin-OpenWebif.git" ] && \
 	(cd $(archivedir)/e2openplugin-OpenWebif.git; git pull ; git checkout HEAD; cd "$(buildprefix)";); \
 	@PREPARE_enigma2_openwebif@

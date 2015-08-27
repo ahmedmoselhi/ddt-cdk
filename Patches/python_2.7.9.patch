@@ -1,0 +1,394 @@
+--- Python-2.7.3/configure	2011-06-11 11:46:28.000000000 -0400
++++ ltib/rpm/BUILD/Python-2.7.3/configure	2011-11-14 12:10:41.011373524 -0500
+@@ -14485,7 +14485,7 @@
+ $as_echo "$ac_cv_have_long_long_format" >&6; }
+ fi
+ 
+-if test "$ac_cv_have_long_long_format" = yes
++if test "$ac_cv_have_long_long_format" != no
+ then
+ 
+ $as_echo "#define PY_FORMAT_LONG_LONG \"ll\"" >>confdefs.h
+--- a/configure.ac	2015-04-29 20:35:29.617099757 +0300
++++ b/configure.ac	2015-04-29 20:38:51.470100684 +0300
+@@ -5,7 +5,7 @@
+ # Set VERSION so we only need to edit in one place (i.e., here)
+ m4_define(PYTHON_VERSION, 2.7)
+ 
+-AC_PREREQ(2.65)
++AC_PREREQ(2.64)
+ 
+ AC_REVISION($Revision$)
+ AC_INIT(python, PYTHON_VERSION, http://bugs.python.org/)
+@@ -3335,7 +3335,7 @@
+ 
+ AC_MSG_RESULT($ac_cv_buggy_getaddrinfo)
+ 
+-if test $have_getaddrinfo = no -o "$ac_cv_buggy_getaddrinfo" = yes
++if test $have_getaddrinfo = no -o "$ac_cv_buggy_getaddrinfo" = yes -a x"$cross_compiling" != "xyes"
+ then
+ 	if test $ipv6 = yes
+ 	then
+--- python-2.7.3.org/Include/pyport.h	2012-04-10 01:07:29.000000000 +0200
++++ python-2.7.3/Include/pyport.h	2012-11-18 13:32:01.396962900 +0100
+@@ -883,7 +883,7 @@
+  * rather than waiting for integer multiplication to trigger bogus
+  * overflows.
+  */
+-#error "LONG_BIT definition appears wrong for platform (bad gcc/glibc config?)."
++/* #error "LONG_BIT definition appears wrong for platform (bad gcc/glibc config?)." */
+ #endif
+ 
+ #ifdef __cplusplus
+--- Python-2.7.3.orig/Lib/distutils/command/build_ext.py	2010-09-10 16:03:17.000000000 -0400
++++ Python-2.7.3/Lib/distutils/command/build_ext.py	2010-12-26 10:07:28.492632349 -0500
+@@ -435,7 +435,9 @@
+         # "build" tree.
+         outputs = []
+         for ext in self.extensions:
+-            outputs.append(self.get_ext_fullpath(ext.name))
++            fullname = self.get_ext_fullname(ext.name)
++            outputs.append(os.path.join(self.build_lib,
++                                        self.get_ext_filename(fullname)))
+         return outputs
+ 
+     def build_extensions(self):
+@@ -454,9 +456,24 @@
+                    "a list of source filenames") % ext.name
+         sources = list(sources)
+ 
+-        ext_path = self.get_ext_fullpath(ext.name)
++        fullname = self.get_ext_fullname(ext.name)
++        if self.inplace:
++            # ignore build-lib -- put the compiled extension into
++            # the source tree along with pure Python modules
++
++            modpath = string.split(fullname, '.')
++            package = string.join(modpath[0:-1], '.')
++            base = modpath[-1]
++
++            build_py = self.get_finalized_command('build_py')
++            package_dir = build_py.get_package_dir(package)
++            ext_filename = os.path.join(package_dir,
++                                        self.get_ext_filename(base))
++        else:
++            ext_filename = os.path.join(self.build_lib,
++                                        self.get_ext_filename(fullname))
+         depends = sources + ext.depends
+-        if not (self.force or newer_group(depends, ext_path, 'newer')):
++        if not (self.force or newer_group(depends, ext_filename, 'newer')):
+             log.debug("skipping '%s' extension (up-to-date)", ext.name)
+             return
+         else:
+@@ -517,7 +534,7 @@
+         language = ext.language or self.compiler.detect_language(sources)
+ 
+         self.compiler.link_shared_object(
+-            objects, ext_path,
++            objects, ext_filename,
+             libraries=self.get_libraries(ext),
+             library_dirs=ext.library_dirs,
+             runtime_library_dirs=ext.runtime_library_dirs,
+@@ -528,7 +545,7 @@
+             target_lang=language)
+ 
+ 
+-    def swig_sources (self, sources, extension):
++    def swig_sources (self, sources, extension=None):
+ 
+         """Walk the list of source files in 'sources', looking for SWIG
+         interface (.i) files.  Run SWIG on all that are found, and
+--- Python-2.7.3.orig//Lib/plat-linux3/regen 1970-01-01 01:00:00.000000000 +0100
++++ Python-2.7.3/Lib/plat-linux3/regen 2001-08-09 14:48:17.000000000 +0200
+@@ -0,0 +1,8 @@
++#! /bin/sh
++case `uname` in
++Linux*) ;;
++*) echo Probably not on a Linux system 1>&2
++ exit 1;;
++esac
++set -v
++h2py -i '(u_long)' /usr/include/sys/types.h /usr/include/netinet/in.h /usr/include/dlfcn.h
+diff -Nur '--exclude-from=diff-ignore' python-2.7.3.org/Lib/sitecustomize.py python-2.7.3/Lib/sitecustomize.py
+--- python-2.7.3.org/Lib/sitecustomize.py	1970-01-01 01:00:00.000000000 +0100
++++ python-2.7.3/Lib/sitecustomize.py	2012-04-08 23:23:39.000000000 +0200
+@@ -0,0 +1,45 @@
++# OpenEmbedded sitecustomize.py (C) 2002-2008 Michael 'Mickey' Lauer <mlauer@vanille-media.de>
++# GPLv2 or later
++# Version: 20081123
++# Features:
++# * set proper default encoding
++# * enable readline completion in the interactive interpreter
++# * load command line history on startup
++# * save command line history on exit
++
++import os
++
++def __exithandler():
++    try:
++        readline.write_history_file( "%s/.python-history" % os.getenv( "HOME", "/tmp" ) )
++    except IOError:
++        pass
++
++def __registerExitHandler():
++    import atexit
++    atexit.register( __exithandler )
++
++def __enableReadlineSupport():
++    readline.set_history_length( 1000 )
++    readline.parse_and_bind( "tab: complete" )
++    try:
++        readline.read_history_file( "%s/.python-history" % os.getenv( "HOME", "/tmp" ) )
++    except IOError:
++        pass
++
++def __enableDefaultEncoding():
++    import sys
++    try:
++        sys.setdefaultencoding( "utf8" )
++    except LookupError:
++        pass
++
++import sys
++try:
++    import rlcompleter, readline
++except ImportError:
++    pass
++else:
++    __enableDefaultEncoding()
++    __registerExitHandler()
++    __enableReadlineSupport()
+--- a/Modules/_ctypes/libffi/configure.ac	2014-12-10 17:59:51.000000000 +0200
++++ b/Modules/_ctypes/libffi/configure.ac	2015-04-30 01:40:56.871979700 +0300
+@@ -3,7 +3,7 @@
+ # file from libffi - slightly patched for Python's ctypes
+ #
+ 
+-AC_PREREQ(2.68)
++AC_PREREQ(2.64)
+ 
+ AC_INIT([libffi], [3.1], [http://github.com/atgreen/libffi/issues])
+ AC_CONFIG_HEADERS([fficonfig.h])
+@@ -49,11 +49,6 @@
+ 
+ AX_COMPILER_VENDOR
+ AX_CC_MAXOPT
+-# The AX_CFLAGS_WARN_ALL macro doesn't currently work for sunpro
+-# compiler.
+-if test "$ax_cv_c_compiler_vendor" != "sun"; then
+-  AX_CFLAGS_WARN_ALL
+-fi
+ 
+ if test "x$GCC" = "xyes"; then
+   CFLAGS="$CFLAGS -fexceptions"
+diff -Nur '--exclude-from=diff-ignore' python-2.7.3.org/Modules/_ctypes/libffi/fficonfig.py.in python-2.7.3/Modules/_ctypes/libffi/fficonfig.py.in
+--- python-2.7.3.org/Modules/_ctypes/libffi/fficonfig.py.in	2010-01-16 19:05:15.000000000 +0100
++++ python-2.7.3/Modules/_ctypes/libffi/fficonfig.py.in	2012-04-09 19:38:57.000000000 +0200
+@@ -32,4 +32,4 @@
+ 
+ ffi_sources += ffi_platforms['@TARGET@']
+ 
+-ffi_cflags = '@CFLAGS@'
++ffi_cflags = '@CFLAGS@ -DPIC'
+diff -Nur python-2.7.3.org/Python/compile.c python-2.7.3/Python/compile.c
+--- python-2.7.3.org/Python/compile.c	2010-06-22 23:47:04.000000000 +0200
++++ python-2.7.3/Python/compile.c	2012-09-17 21:55:58.776875344 +0200
+@@ -32,7 +32,7 @@
+ #include "symtable.h"
+ #include "opcode.h"
+ 
+-int Py_OptimizeFlag = 0;
++int Py_OptimizeFlag = 1;
+ 
+ #define DEFAULT_BLOCK_SIZE 16
+ #define DEFAULT_BLOCKS 8
+diff -Nur '--exclude-from=diff-ignore' python-2.7.3.org/Modules/termios.c python-2.7.3/Modules/termios.c
+--- python-2.7.3.org/Modules/termios.c	2010-05-09 17:15:40.000000000 +0200
++++ python-2.7.3/Modules/termios.c	2012-04-09 18:43:41.000000000 +0200
+@@ -17,6 +17,12 @@
+ #include <termio.h>
+ #endif
+ #include <sys/ioctl.h>
++ 
++#if defined(__sh__)
++#include <linux/serial.h>
++#define TIOCGICOUNT    0x545D
++#define TIOCSERGSTRUCT 0x5458
++#endif
+ 
+ /* HP-UX requires that this be included to pick up MDCD, MCTS, MDSR,
+  * MDTR, MRI, and MRTS (appearantly used internally by some things
+diff -urN Python-2.7.3/setup.py ltib/rpm/BUILD/Python-2.7.3/setup.py
+--- Python-2.7.3/setup.py	2011-06-11 11:46:28.000000000 -0400
++++ ltib/rpm/BUILD/Python-2.7.3/setup.py	2011-11-14 12:13:02.175758583 -0500
+@@ -159,6 +159,7 @@
+     def __init__(self, dist):
+         build_ext.__init__(self, dist)
+         self.failed = []
++        self.cross_compile = os.environ.get('CROSS_COMPILE_TARGET') == 'yes'
+ 
+     def build_extensions(self):
+ 
+@@ -294,6 +295,14 @@
+                           (ext.name, sys.exc_info()[1]))
+             self.failed.append(ext.name)
+             return
++
++        # Import check will not work when cross-compiling.
++        if os.environ.has_key('PYTHONXCPREFIX'):
++            self.announce(
++                'WARNING: skipping import check for cross-compiled: "%s"' %
++                ext.name)
++            return
++
+         # Workaround for Mac OS X: The Carbon-based modules cannot be
+         # reliably imported into a command-line Python
+         if 'Carbon' in ext.extra_link_args:
+@@ -440,11 +449,18 @@
+ 
+     def detect_modules(self):
+         # Ensure that /usr/local is always used
+-        if not cross_compiling:
+-            add_dir_to_list(self.compiler.library_dirs, '/usr/local/lib')
+-            add_dir_to_list(self.compiler.include_dirs, '/usr/local/include')
+-        if cross_compiling:
+-            self.add_gcc_paths()
++        try:
++            modules_include_dirs = os.environ["PYTHON_MODULES_INCLUDE"].split()
++        except KeyError:
++            modules_include_dirs = ['/usr/local/include']
++        try:
++            modules_lib_dirs = os.environ["PYTHON_MODULES_LIB"].split()
++        except KeyError:
++            modules_lib_dirs = ['/usr/local/lib']
++        for dir in modules_include_dirs:
++            add_dir_to_list(self.compiler.include_dirs, dir)
++        for dir in modules_lib_dirs:
++            add_dir_to_list(self.compiler.library_dirs, dir)
+         self.add_multiarch_paths()
+ 
+         # Add paths specified in the environment variables LDFLAGS and
+@@ -482,7 +498,8 @@
+                         add_dir_to_list(dir_list, directory)
+ 
+         if os.path.normpath(sys.prefix) != '/usr' \
+-                and not sysconfig.get_config_var('PYTHONFRAMEWORK'):
++                and not sysconfig.get_config_var('PYTHONFRAMEWORK') \
++                and not self.cross_compile:
+             # OSX note: Don't add LIBDIR and INCLUDEDIR to building a framework
+             # (PYTHONFRAMEWORK is set) to avoid # linking problems when
+             # building a framework with different architectures than
+@@ -500,18 +517,22 @@
+         # lib_dirs and inc_dirs are used to search for files;
+         # if a file is found in one of those directories, it can
+         # be assumed that no additional -I,-L directives are needed.
+-        inc_dirs = self.compiler.include_dirs[:]
+-        lib_dirs = self.compiler.library_dirs[:]
+-        if not cross_compiling:
+-            for d in (
+-                '/usr/include',
+-                ):
+-                add_dir_to_list(inc_dirs, d)
+-            for d in (
++        lib_dirs = self.compiler.library_dirs
++        inc_dirs = self.compiler.include_dirs
++        if not self.cross_compile:
++            lib_dirs += [
+                 '/lib64', '/usr/lib64',
+                 '/lib', '/usr/lib',
+-                ):
+-                add_dir_to_list(lib_dirs, d)
++                ]
++            inc_dirs += ['/usr/include']
++        else:
++            # The common install prefix of 3rd party libraries used during
++            # cross compilation
++            mydir = os.environ.get('PYTHON_XCOMPILE_DEPENDENCIES_PREFIX')
++            if mydir:
++                inc_dirs += [mydir + '/include' ]
++                inc_dirs += [mydir + '/lib/libffi-3.0.10/include']
++                lib_dirs += [mydir + '/lib' ]
+         exts = []
+         missing = []
+ 
+@@ -520,6 +541,18 @@
+ 
+         srcdir = sysconfig.get_config_var('srcdir')
+ 
++        # add paths from CFLAGS and LDFLAGS
++        cflags, ldflags = sysconfig.get_config_vars(
++                    'CFLAGS', 'LDFLAGS')
++        for item in cflags.split():
++            if item.startswith('-I'):
++                inc_dirs.append(item[2:])
++
++        for item in ldflags.split():
++            if item.startswith('-L'):
++                lib_dirs.append(item[2:])
++        print (inc_dirs)
++
+         # Check for AtheOS which has libraries in non-standard locations
+         if host_platform == 'atheos':
+             lib_dirs += ['/system/libs', '/atheos/autolnk/lib']
+@@ -1106,7 +1139,14 @@
+                              '/usr/local/include/sqlite3',
+                            ]
+         if cross_compiling:
+-            sqlite_inc_paths = []
++            # The common install prefix of 3rd party headers used during
++            # cross compilation
++            mydir = os.environ.get('PYTHON_XCOMPILE_DEPENDENCIES_PREFIX')
++            if mydir:
++                sqlite_inc_paths = [mydir + '/include' ]
++            else:
++                sqlite_inc_paths = []
++
+         MIN_SQLITE_VERSION_NUMBER = (3, 0, 8)
+         MIN_SQLITE_VERSION = ".".join([str(x)
+                                     for x in MIN_SQLITE_VERSION_NUMBER])
+@@ -1146,12 +1186,22 @@
+                     print "sqlite: %s had no SQLITE_VERSION"%(f,)
+ 
+         if sqlite_incdir:
+-            sqlite_dirs_to_check = [
+-                os.path.join(sqlite_incdir, '..', 'lib64'),
+-                os.path.join(sqlite_incdir, '..', 'lib'),
+-                os.path.join(sqlite_incdir, '..', '..', 'lib64'),
+-                os.path.join(sqlite_incdir, '..', '..', 'lib'),
+-            ]
++            if not self.cross_compile:
++                sqlite_dirs_to_check = [
++                    os.path.join(sqlite_incdir, '..', 'lib64'),
++                    os.path.join(sqlite_incdir, '..', 'lib'),
++                    os.path.join(sqlite_incdir, '..', '..', 'lib64'),
++                    os.path.join(sqlite_incdir, '..', '..', 'lib'),
++                ]
++            else:
++                # The common install prefix of 3rd party headers used during
++                # cross compilation
++                mydir = os.environ.get('PYTHON_XCOMPILE_DEPENDENCIES_PREFIX')
++                if mydir:
++                    sqlite_dirs_to_check = [mydir + '/lib' ]
++                else:
++                    sqlite_dirs_to_check = []
++
+             sqlite_libfile = self.compiler.find_library_file(
+                                 sqlite_dirs_to_check + lib_dirs, 'sqlite3')
+             if sqlite_libfile:
+@@ -2029,8 +2079,14 @@
+ 
+                 # Pass empty CFLAGS because we'll just append the resulting
+                 # CFLAGS to Python's; -g or -O2 is to be avoided.
+-                cmd = "cd %s && env CFLAGS='' '%s/configure' %s" \
+-                      % (ffi_builddir, ffi_srcdir, " ".join(config_args))
++                if self.cross_compile:
++                    cmd = "cd %s && env CFLAGS='' %s/configure --host=%s %s" \
++                          % (ffi_builddir, ffi_srcdir,
++                             os.environ.get('HOSTARCH'),
++                             " ".join(config_args))
++                else:
++                    cmd = "cd %s && env CFLAGS='' '%s/configure' %s" \
++                          % (ffi_builddir, ffi_srcdir, " ".join(config_args))
+ 
+                 res = os.system(cmd)
+                 if res or not os.path.exists(ffi_configfile):

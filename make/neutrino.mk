@@ -10,8 +10,9 @@ $(targetprefix)/var/etc/.version:
 #
 #
 #
-NEUTRINO_DEPS  = bootstrap openssl libcurl libpng libjpeg libgif libfreetype
-NEUTRINO_DEPS += ffmpeg lua luaexpat luacurl libdvbsipp libsigc libopenthreads libusb libalsa neutrino-mp-plugins
+NEUTRINO_DEPS  = bootstrap libcurl libpng libjpeg libgif libfreetype
+NEUTRINO_DEPS += ffmpeg lua luaexpat luacurl libdvbsipp libsigc libopenthreads libusb libalsa
+NEUTRINO_DEPS += neutrino-mp-plugins
 NEUTRINO_DEPS += $(EXTERNALLCD_DEP)
 
 if ENABLE_WLANDRIVER
@@ -20,7 +21,7 @@ endif
 
 NEUTRINO_DEPS2 = libid3tag libmad libvorbisidec
 
-N_CFLAGS  = -Wall -W -Wshadow -g0 -pipe -Os -fno-strict-aliasing -D__user= -DCPU_FREQ
+N_CFLAGS  = -Wall -W -Wshadow -g0 -pipe -Os -fno-strict-aliasing -DCPU_FREQ
 
 N_CPPFLAGS = -I$(driverdir)/bpamem
 N_CPPFLAGS += -I$(targetprefix)/usr/include/

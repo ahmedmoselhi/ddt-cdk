@@ -148,7 +148,7 @@ sub process_make_prepare (@)
       }
       elsif ( $_[1] =~ m#\.tar\.xz$# )
       {
-        $output .= "tar -xvf \\\$(archivedir)/" . $_[1];
+        $output .= "tar -xpf \\\$(archivedir)/" . $_[1];
       }
       elsif ( $_[1] =~ m#\.exe$# )
       {

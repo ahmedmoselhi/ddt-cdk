@@ -21,7 +21,7 @@ cdk-clean:
 		BIN_DEST=$(targetprefix)/bin \
 		INSTALL_MOD_PATH=$(targetprefix) clean
 	-$(MAKE) -C $(appsdir)/tools distclean
-	-$(MAKE) -C $(appsdir)/libs/gst-plugins-dvbmediasink distclean
+	-$(MAKE) -C $(appsdir)/libs/gst-plugins-dvbmediasink-* distclean
 	-$(MAKE) -C $(appsdir)/libs/libstgles distclean
 	-$(MAKE) -C $(TFINSTALLER_DIR) clean
 

@@ -8,6 +8,7 @@ $(D)/libncurses: $(D)/bootstrap @DEPENDS_libncurses@
 			--target=$(target) \
 			--prefix=/usr \
 			--with-terminfo-dirs=/usr/share/terminfo \
+			--with-pkg-config=/usr/lib/pkgconfig \
 			--with-shared \
 			--without-cxx \
 			--without-cxx-binding \
@@ -25,7 +26,8 @@ $(D)/libncurses: $(D)/bootstrap @DEPENDS_libncurses@
 			--without-manpages \
 			--with-fallbacks='linux vt100 xterm' \
 		&& \
-		$(MAKE) libs HOSTCC=gcc \
+		$(MAKE) libs \
+			HOSTCC=gcc \
 			HOSTCCFLAGS="$(CFLAGS) -DHAVE_CONFIG_H -I../ncurses -DNDEBUG -D_GNU_SOURCE -I../include" \
 			HOSTLDFLAGS="$(LDFLAGS)" && \
 		sed -e 's,^prefix="/usr",prefix="$(targetprefix)/usr",' < misc/ncurses-config > $(hostprefix)/bin/ncurses5-config && \
@@ -33,6 +35,23 @@ $(D)/libncurses: $(D)/bootstrap @DEPENDS_libncurses@
 		@INSTALL_libncurses@
 		rm -f $(targetprefix)/usr/bin/ncurses5-config
 	@CLEANUP_libncurses@
+	touch $@
+
+#
+# openssl_e2
+#
+$(D)/openssl_e2: $(D)/bootstrap @DEPENDS_openssl_e2@
+	@PREPARE_openssl_e2@
+	cd @DIR_openssl_e2@ && \
+		$(BUILDENV) \
+		./Configure -DL_ENDIAN shared no-hw no-engine linux-generic32 \
+			--prefix=/usr \
+			--openssldir=/etc/ssl \
+			--openssldir=/.remove \
+		&& \
+		$(MAKE) && \
+		@INSTALL_openssl_e2@
+	@CLEANUP_openssl_e2@
 	touch $@
 
 #
@@ -393,7 +412,7 @@ $(D)/libgif_e2: $(D)/bootstrap @DEPENDS_libgif_e2@
 #
 # libcurl
 #
-$(D)/libcurl: $(D)/bootstrap $(D)/openssl $(D)/zlib @DEPENDS_libcurl@
+$(D)/libcurl: $(D)/bootstrap $(OPENSSL) $(D)/zlib @DEPENDS_libcurl@
 	@PREPARE_libcurl@
 	cd @DIR_libcurl@ && \
 		$(CONFIGURE) \
@@ -546,6 +565,20 @@ $(D)/libvorbisidec: $(D)/bootstrap $(D)/libogg @DEPENDS_libvorbisidec@
 	touch $@
 
 #
+# libdca
+#
+$(D)/libdca: $(D)/bootstrap @DEPENDS_libdca@
+	@PREPARE_libdca@
+	cd @DIR_libdca@ && \
+		$(CONFIGURE) \
+			--prefix=/usr \
+		&& \
+		$(MAKE) all && \
+		@INSTALL_libdca@
+	@CLEANUP_libdca@
+	touch $@
+
+#
 # libffi
 #
 $(D)/libffi: $(D)/bootstrap @DEPENDS_libffi@
@@ -671,7 +704,7 @@ $(D)/lcms: $(D)/bootstrap $(D)/libjpeg @DEPENDS_lcms@
 $(D)/directfb: $(D)/bootstrap $(D)/libfreetype @DEPENDS_directfb@
 	@PREPARE_directfb@
 	cd @DIR_directfb@ && \
-		libtoolize --copy --ltdl && \
+		libtoolize --copy --ltdl --force && \
 		autoreconf -fi && \
 		$(BUILDENV) \
 		./configure \
@@ -807,7 +840,7 @@ $(D)/libdvdnav: $(D)/bootstrap $(D)/libdvdread @DEPENDS_libdvdnav@
 	@PREPARE_libdvdnav@
 	cd @DIR_libdvdnav@ && \
 		$(BUILDENV) \
-		libtoolize --copy --ltdl && \
+		libtoolize --copy --ltdl --force && \
 		./autogen.sh \
 			--build=$(build) \
 			--host=$(target) \
@@ -827,9 +860,9 @@ $(D)/libdvdread: $(D)/bootstrap @DEPENDS_libdvdread@
 	@PREPARE_libdvdread@
 	cd @DIR_libdvdread@ && \
 		$(CONFIGURE) \
+			--prefix=/usr \
 			--enable-static \
 			--enable-shared \
-			--prefix=/usr \
 		&& \
 		$(MAKE) && \
 		@INSTALL_libdvdread@
@@ -883,13 +916,15 @@ $(D)/libfdk_aac: $(D)/bootstrap @DEPENDS_libfdk_aac@
 if ENABLE_ENIGMA2
 FFMPEG_EXTRA  = --enable-librtmp
 FFMPEG_EXTRA += --enable-protocol=librtmp --enable-protocol=librtmpe --enable-protocol=librtmps --enable-protocol=librtmpt --enable-protocol=librtmpte
-LIBRTMPDUMP   = librtmpdump
+OPENSSL = openssl_e2
+LIBRTMPDUMP = librtmpdump
 else
 FFMPEG_EXTRA = --disable-iconv
 LIBXML2 = libxml2
+OPENSSL = openssl
 endif
 
-$(D)/ffmpeg: $(D)/bootstrap $(D)/openssl $(D)/libass $(LIBXML2) $(LIBRTMPDUMP) @DEPENDS_ffmpeg@
+$(D)/ffmpeg: $(D)/bootstrap $(OPENSSL) $(D)/libass $(LIBXML2) $(LIBRTMPDUMP) @DEPENDS_ffmpeg@
 	@PREPARE_ffmpeg@
 	cd @DIR_ffmpeg@ && \
 		./configure \
@@ -1183,7 +1218,7 @@ $(D)/enchant: $(D)/bootstrap $(D)/glib2 @DEPENDS_enchant@
 $(D)/lite: $(D)/bootstrap $(D)/directfb @DEPENDS_lite@
 	@PREPARE_lite@
 	cd @DIR_lite@ && \
-		libtoolize --copy --ltdl && \
+		libtoolize --copy --ltdl --force && \
 		autoreconf -fi && \
 		$(CONFIGURE) \
 			--prefix=/usr \
@@ -1664,7 +1699,7 @@ $(D)/pugixml: $(D)/bootstrap @DEPENDS_pugixml@
 #
 # librtmpdump
 #
-$(D)/librtmpdump: $(D)/bootstrap $(D)/openssl $(D)/zlib @DEPENDS_librtmpdump@
+$(D)/librtmpdump: $(D)/bootstrap $(D)/zlib $(OPENSSL) @DEPENDS_librtmpdump@
 	@PREPARE_librtmpdump@
 	[ -d "$(archivedir)/rtmpdump.git" ] && \
 	(cd $(archivedir)/rtmpdump.git; git pull; cd "$(buildprefix)";); \

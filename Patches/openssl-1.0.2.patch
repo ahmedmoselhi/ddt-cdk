@@ -1,0 +1,10 @@
+--- openssl-1.0.2d.old/Makefile.org	2015-07-09 13:57:15.000000000 +0200
++++ openssl-1.0.2d.new/Makefile.org	2015-08-11 19:59:01.000000000 +0200
+@@ -136,7 +136,7 @@
+ 
+ BASEADDR=
+ 
+-DIRS=   crypto ssl engines apps test tools
++DIRS=   crypto ssl
+ ENGDIRS= ccgost
+ SHLIBDIRS= crypto ssl

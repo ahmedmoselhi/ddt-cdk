@@ -1,4 +1,4 @@
--- openssl-0.9.8g.orig/Configure	2013-02-05 12:58:59.000000000 +0100
+--- openssl-0.9.8g.orig/Configure	2013-02-05 12:58:59.000000000 +0100
 +++ openssl-0.9.8g/Configure	2014-05-27 16:40:20.457317425 +0200
 @@ -403,6 +403,12 @@
  "QNX6",       "gcc:-DTERMIOS::::-lsocket::${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -24,3 +24,14 @@
  SHLIBDIRS= crypto ssl fips
  
  # dirs in crypto to build
+--- openssl-0.9.8x.orig/Makefile.org    2010-01-27 17:06:36.000000000 +0100
++++ openssl-0.9.8x/Makefile.org 2014-08-24 13:35:14.335683341 +0200
+@@ -615,7 +615,7 @@
+ dist_pem_h:
+        (cd crypto/pem; $(MAKE) -e $(BUILDENV) pem.h; $(MAKE) clean)
+
+-install: all install_docs install_sw
++install: all install_sw
+
+ install_sw:
+        @$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
