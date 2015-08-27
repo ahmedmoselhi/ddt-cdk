@@ -1,7 +1,7 @@
 #
 # driver
 #
-$(D)/driver: $(driverdir)/Makefile $(D)/bootstrap $(D)/linux-kernel
+$(D)/driver: $(driverdir)/Makefile $(D)/bootstrap $(D)/linux-kernel $(D)/wpa_supplicant $(D)/wireless_tools
 	cp $(driverdir)/stgfb/stmfb/linux/drivers/video/stmfb.h $(targetprefix)/usr/include/linux
 	cp $(driverdir)/player2/linux/include/linux/dvb/stm_ioctls.h $(targetprefix)/usr/include/linux/dvb
 	$(MAKE) -C $(driverdir) ARCH=sh \
@@ -19,6 +19,7 @@ $(D)/driver: $(driverdir)/Makefile $(D)/bootstrap $(D)/linux-kernel
 		BIN_DEST=$(targetprefix)/bin \
 		INSTALL_MOD_PATH=$(targetprefix) \
 		install
+	cp -af $(archivedir)/pti_np/pti.ko $(targetprefix)/lib/modules/$(KERNELVERSION)/extra/pti/pti.ko
 	$(DEPMOD) -ae -b $(targetprefix) -F $(buildprefix)/$(KERNEL_DIR)/System.map -r $(KERNELVERSION)
 	touch $@
 
