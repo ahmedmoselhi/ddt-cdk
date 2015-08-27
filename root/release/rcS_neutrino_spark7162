@@ -1,4 +1,5 @@
 #!/bin/sh
+export PATH=/sbin:/bin:/usr/bin:/usr/sbin
 
 MODDIR=/lib/modules
 echo "init frontpanel"
@@ -55,7 +56,7 @@ if [ ! -e /var/etc/.firstboot ]; then
    insmod $MODDIR/mme_host.ko transport0=shm
 
    echo "init AVS"
-   insmod $MODDIR/avs.ko type=avs_none
+   insmod $MODDIR/avs.ko type=avs_pio
 
    player=`cat /proc/stb/player/version`
    player=`cat /proc/stb/player/version | awk '{ print substr( $0, length($0) - 2, length($0) ) }'`
@@ -68,12 +69,28 @@ if [ ! -e /var/etc/.firstboot ]; then
    insmod $MODDIR/stmvbi.ko
    insmod $MODDIR/pseudocard.ko
 
-   insmod $MODDIR/spark7162.ko UnionTunerType=t
-   insmod $MODDIR/pti.ko
+   if [ ! -d /var/tuxbox/config/.conf ]
+	then
+		echo "Create .conf dir"
+		mkdir /var/tuxbox/config/.conf
+   fi
+
+   if [ -e /var/tuxbox/config/.conf/.tuner_c ]
+	then
+		echo "Tuner type C"
+		insmod $MODDIR/spark7162.ko UnionTunerType=c
+	else
+		echo "Tuner type T"
+		rm -f /var/tuxbox/config/.conf/.tuner*
+		touch /var/tuxbox/config/.conf/.tuner_t
+		insmod $MODDIR/spark7162.ko UnionTunerType=t
+   fi
+
+   insmod $MODDIR/pti.ko waitMS=5
    insmod $MODDIR/stm_monitor.ko
    insmod $MODDIR/stmsysfs.ko
    insmod $MODDIR/stmdvb.ko
-   insmod $MODDIR/player2.ko
+   insmod $MODDIR/player2.ko discardlateframe=1 noaudiosync=1
    insmod $MODDIR/sth264pp.ko
    insmod $MODDIR/stmalloc.ko
    insmod $MODDIR/platform.ko
@@ -82,6 +99,13 @@ if [ ! -e /var/etc/.firstboot ]; then
    insmod $MODDIR/bpamem.ko
 
    stfbcontrol a 0
+
+
+   showiframe -p /var/boot/bootlogo.mvi &
+   sleep 8
+
+
+
 
    echo "init lircd"
    mkdir -p /var/run/lirc
@@ -97,9 +121,15 @@ if [ ! -e /var/etc/.firstboot ]; then
    [ -f /var/etc/modules.extra ] && eval `sed -e 's/#.*//' -e '/^\s*$/d' -e 's/^\(.*\)/insmod \0;/' < /var/etc/modules.extra`
 
    stfbcontrol a 255
+	
+   rm -f /dev/dvb/adapter0/ca1
+   mknod /dev/dvb/adapter0/ca1 c 212 22
+   rm -f /dev/dvb/adapter0/ca2
+   mknod /dev/dvb/adapter0/ca2 c 212 38
 
-   # start automounter with umount timeout of 5 seconds
-   MKDIR -p /tmp/autofs
+
+# start automounter with umount timeout of 5 seconds
+   mkdir -p /tmp/autofs
    insmod $MODDIR/autofs4.ko
    /usr/sbin/automount --ghost --timeout=5 /tmp/autofs file /etc/auto.usb
 
@@ -132,8 +162,27 @@ if [ ! -e /var/etc/.firstboot ]; then
    #tuner workaround
    export FE_OFFSET=1
 
+   /etc/init.d/cam start
+
    echo "run" > /dev/vfd
    echo "LOADING neutrino"
+
+
+if [ -d /var/pkg ]; then
+	opkg install /var/pkg/glibc*
+	opkg install /var/pkg/libz*
+	opkg install /var/pkg/libglib*
+	opkg install /var/pkg/libncurses*
+	opkg install /var/pkg/mc*
+	opkg install /var/pkg/nano*
+	opkg install /var/pkg/openssl*
+	opkg install /var/pkg/libuuid*
+	opkg install /var/pkg/wget*
+	rm -rf /var/pkg
+fi
+
+
+  killall -9 showiframe
 
    until false
    do

@@ -1,5 +1,9 @@
 #!/bin/sh
 
+export PATH=/sbin:/bin:/usr/bin:/usr/sbin
+
+
+
 MODDIR=/lib/modules
 echo "init frontpanel"
 insmod $MODDIR/aotom.ko
@@ -75,13 +79,16 @@ if [ ! -e /var/etc/.firstboot ]; then
    insmod $MODDIR/stm_monitor.ko
    insmod $MODDIR/stmsysfs.ko
    insmod $MODDIR/stmdvb.ko
-   insmod $MODDIR/player2.ko
+   insmod $MODDIR/player2.ko discardlateframe=1
    insmod $MODDIR/sth264pp.ko
    insmod $MODDIR/stmalloc.ko
    insmod $MODDIR/platform.ko
    insmod $MODDIR/silencegen.ko
    insmod $MODDIR/smartcard.ko
    insmod $MODDIR/bpamem.ko
+
+   showiframe -p /var/boot/bootlogo.mvi &
+   sleep 8
 
    echo "init lircd"
    mkdir -p /var/run/lirc
@@ -120,8 +127,33 @@ if [ ! -e /var/etc/.firstboot ]; then
    #timefix
    date -s "200901011200"
 
+   /etc/init.d/cam start
+
    echo "run" > /dev/vfd
    echo "LOADING neutrino"
+
+
+if [ -d /var/pkg ]; then
+        opkg install /var/pkg/glibc*
+        opkg install /var/pkg/libz*
+        opkg install /var/pkg/libglib*
+        opkg install /var/pkg/libncurses*
+        opkg install /var/pkg/mc*
+        opkg install /var/pkg/nano*
+	opkg install /var/pkg/openssl*
+        opkg install /var/pkg/libuuid*
+        opkg install /var/pkg/wget*
+
+        rm -rf /var/pkg
+fi
+
+
+
+
+
+
+   killall -9 showiframe
+
 
    until false
    do
