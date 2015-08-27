@@ -17,7 +17,7 @@ index 78e905e..5d19d2a 100644
 +#define SPI_FLASH_BOOT
 +/***** 2011-11-14 D26LF Add end ****/
 +
-+const char *LMI_IO_partalias[] = { "v4l2-coded-video-buffers", "BPA2_Region1", "v4l2-video-buffers" ,
++const char *LMI_IO_partalias[] = { "v4l2-coded-video-buffers", "BPA2_Region1", "v4l2-video-buffers" , "audio" ,
 +                                    "coredisplay-video", "gfx-memory", "BPA2_Region0", "LMI_VID", NULL };
 +
 +/*
@@ -98,7 +98,7 @@ index 78e905e..5d19d2a 100644
  	.options	= NAND_NO_AUTOINCR | NAND_USE_FLASH_BBT,
 -	.nr_partitions	= 2,
 +//	.nr_partitions	= 2,
-+	.nr_partitions	= 8,
++	.nr_partitions	= 7,
  	.partitions	= (struct mtd_partition []) {
 +
 +#if 0
@@ -143,13 +143,13 @@ index 78e905e..5d19d2a 100644
 +		{
 +			.name	= "E2 Userfs",
 +			.offset	= 0x18800000,
-+			.size	= 0x04000000 //64M
++			.size	= 0x07700000 //64M
 +		},
-+		{
-+			.name	= "NAND DATA",
-+			.offset	= 0x1C800000,
-+			.size	= 0x03700000 //55M	cc changed reserved 1024KB for u-boot bbt
-+		},
++//		{
++//			.name	= "NAND DATA",
++//			.offset	= 0x1C800000,
++//			.size	= 0x03700000 //55M	cc changed reserved 1024KB for u-boot bbt
++//		},
  	},
  	.timing_spec	= &NAND_TSPEC_HYNIX_HY27UH08AG5B,
  };
