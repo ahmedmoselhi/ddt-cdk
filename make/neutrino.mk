@@ -2,19 +2,16 @@
 # Makefile to build NEUTRINO
 #
 $(targetprefix)/var/etc/.version:
-	echo "imagename=Neutrino" > $@
-	echo "homepage=http://gitorious.org/open-duckbox-project-sh4" >> $@
-	echo "creator=`id -un`" >> $@
-	echo "docs=http://gitorious.org/open-duckbox-project-sh4/pages/Home" >> $@
-	echo "forum=http://gitorious.org/open-duckbox-project-sh4" >> $@
+	echo "imagename=Neutrino-MP-SDL" > $@
+	echo "creator=Lexand0s" >> $@
+	echo "forum=http://gisclub.tv/enigma2-306/" >> $@
 	echo "version=0200`date +%Y%m%d%H%M`" >> $@
-	echo "git=`git describe`" >> $@
 
 #
 #
 #
 NEUTRINO_DEPS  = bootstrap openssl libcurl libpng libjpeg libgif libfreetype
-NEUTRINO_DEPS += ffmpeg lua luaexpat luacurl libdvbsipp libsigc libopenthreads libusb libalsa
+NEUTRINO_DEPS += ffmpeg lua luaexpat luacurl libdvbsipp libsigc libopenthreads libusb libalsa neutrino-mp-plugins
 NEUTRINO_DEPS += $(EXTERNALLCD_DEP)
 
 if ENABLE_WLANDRIVER
@@ -207,6 +204,7 @@ $(D)/neutrino-mp-cst-next.config.status:
 			--host=$(target) \
 			$(N_CONFIG_OPTS) \
 			--with-boxtype=$(BOXTYPE) \
+			--with-boxmodel=$(BOXTYPE) \
 			--enable-upnp \
 			--enable-ffmpegdec \
 			--enable-giflib \
