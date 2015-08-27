@@ -1,0 +1,99 @@
+#!/bin/sh
+# Parse emu files for status info
+# 'mode' can be 'ICONS' or 'TEXT'
+# 'short' is '1' by default, any other value - 'long' text mode 
+dlm=" "
+src=""
+emu="NONE"
+#mode="ICONS"
+mode="TEXT"
+short="0"
+
+
+
+
+if [ -f /tmp/camd3.pid ]
+then
+emu="CAMD3"
+fi
+
+if [ -f /tmp/wicardd.pid ]
+then
+emu="WICARD"
+fi
+
+if [ -f /tmp/oscam.pid ]
+then
+emu="OSCAM"
+fi
+
+if [ -f /tmp/mgcamd.pid ]
+then
+emu="MGCAMD"
+fi
+
+long()
+{
+mode="TEXT"
+if [ -s /tmp/ecm.info ]
+then
+src=`cat /tmp/ecm.info | grep -e "source" -e "response" -e "reader:" -e "FROM:"`
+fi
+}
+
+short()
+{
+if [ -s /tmp/ecm.info ]
+then
+
+grep /tmp/ecm.info -e "net" -e "NET" > /dev/null
+out=$?
+
+if [ $out -eq 0 ]; then
+src="NET"
+fi
+
+grep /tmp/ecm.info -e "." > /dev/null && grep /tmp/ecm.info -e "FROM:" > /dev/null
+out=$?
+
+if [ $out -eq 0 ]; then
+src="NET"
+fi
+
+grep /tmp/ecm.info -e "emu" -e "EMU" > /dev/null
+out=$?
+
+if [ $out -eq 0 ]; then
+src="EMU"
+fi
+
+grep /tmp/ecm.info -e "cache" -e "CACHE" > /dev/null
+out=$?
+
+if [ $out -eq 0 ]; then
+src="EMU"
+fi
+
+grep /tmp/ecm.info -e "card" -e "CARD" > /dev/null
+out=$?
+
+if [ $out -eq 0 ]; then
+src="CARD"
+fi
+
+fi
+}
+
+if [ $short -eq 1 ]; then
+short
+else
+long
+fi
+
+if [ ! -s /tmp/ecm.info ] && [ $emu != "NONE" ]
+then
+src="OFFLINE OR INFO NOT FOUND"
+fi
+
+echo $mode$dlm$emu$dlm$src
+

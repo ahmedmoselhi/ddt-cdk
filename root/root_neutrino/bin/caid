@@ -1,0 +1,6 @@
+#!/bin/sh
+# Parse emu files for caids
+if [ -f /tmp/ecm.info ]
+then
+cat /tmp/ecm.info | grep -e "aid" -e "AID" -e "aID"
+fi
