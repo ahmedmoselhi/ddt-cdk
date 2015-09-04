@@ -28,6 +28,13 @@ if [ ! -e /var/etc/.firstboot ]; then
 #   echo "starting telnetd"
 #   /usr/sbin/telnetd -l /bin/autologin
 
+##Make ramzswap
+swap_size=$(($(grep MemTotal /proc/meminfo | awk ' { print $2 } ')/4))
+insmod $MODDIR/ramzswap.ko disksize_kb=$swap_size
+mkswap /dev/ramzswap0
+swapon /dev/ramzswap0
+###################
+
    echo "init stmfb"
    insmod $MODDIR/stmcore-display-sti7105.ko
    insmod $MODDIR/stmfb.ko display0=1280x720-32@50:12m:pal:yuv:yuv

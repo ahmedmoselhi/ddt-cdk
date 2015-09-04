@@ -32,8 +32,14 @@ if [ ! -e /var/etc/.firstboot ]; then
    /etc/init.d/mountall start
    /etc/init.d/hostname start
 
-   echo "starting telnetd"
-   /usr/sbin/telnetd -l /bin/autologin
+#   echo "starting telnetd"
+#   /usr/sbin/telnetd -l /bin/autologin
+
+swap_size=$(($(grep MemTotal /proc/meminfo | awk ' { print $2 } ')/4))
+insmod $MODDIR/ramzswap.ko disksize_kb=$swap_size
+mkswap /dev/ramzswap0
+swapon /dev/ramzswap0
+
 
    echo "init stmfb"
    insmod $MODDIR/stmcore-display-sti7111.ko
