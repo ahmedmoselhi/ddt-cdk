@@ -1,47 +1,76 @@
---- Python-2.7.3/configure	2011-06-11 11:46:28.000000000 -0400
-+++ ltib/rpm/BUILD/Python-2.7.3/configure	2011-11-14 12:10:41.011373524 -0500
-@@ -14485,7 +14485,7 @@
- $as_echo "$ac_cv_have_long_long_format" >&6; }
- fi
- 
--if test "$ac_cv_have_long_long_format" = yes
-+if test "$ac_cv_have_long_long_format" != no
- then
- 
- $as_echo "#define PY_FORMAT_LONG_LONG \"ll\"" >>confdefs.h
---- a/configure.ac	2015-04-29 20:35:29.617099757 +0300
-+++ b/configure.ac	2015-04-29 20:38:51.470100684 +0300
-@@ -5,7 +5,7 @@
- # Set VERSION so we only need to edit in one place (i.e., here)
- m4_define(PYTHON_VERSION, 2.7)
- 
--AC_PREREQ(2.65)
-+AC_PREREQ(2.64)
- 
- AC_REVISION($Revision$)
- AC_INIT(python, PYTHON_VERSION, http://bugs.python.org/)
-@@ -3335,7 +3335,7 @@
- 
- AC_MSG_RESULT($ac_cv_buggy_getaddrinfo)
- 
--if test $have_getaddrinfo = no -o "$ac_cv_buggy_getaddrinfo" = yes
-+if test $have_getaddrinfo = no -o "$ac_cv_buggy_getaddrinfo" = yes -a x"$cross_compiling" != "xyes"
- then
- 	if test $ipv6 = yes
- 	then
---- python-2.7.3.org/Include/pyport.h	2012-04-10 01:07:29.000000000 +0200
-+++ python-2.7.3/Include/pyport.h	2012-11-18 13:32:01.396962900 +0100
-@@ -883,7 +883,7 @@
-  * rather than waiting for integer multiplication to trigger bogus
-  * overflows.
-  */
--#error "LONG_BIT definition appears wrong for platform (bad gcc/glibc config?)."
-+/* #error "LONG_BIT definition appears wrong for platform (bad gcc/glibc config?)." */
+--- a/Lib/httplib.py
++++ b/Lib/httplib.py
+@@ -1193,7 +1193,7 @@
+             self.key_file = key_file
+             self.cert_file = cert_file
+             if context is None:
+-                context = ssl._create_default_https_context()
++                context = ssl._create_unverified_context()
+             if key_file or cert_file:
+                 context.load_cert_chain(cert_file, key_file)
+             self._context = context
+--- a/Modules/_ctypes/_ctypes.c
++++ b/Modules/_ctypes/_ctypes.c
+@@ -642,10 +642,16 @@
+ #ifdef __CYGWIN__
+ /* dlerror() isn't very helpful on cygwin */
+         PyErr_Format(PyExc_ValueError,
+-                     "symbol '%s' not found (%s) ",
++                     "symbol '%s' not found",
+                      name);
+ #else
+-        PyErr_SetString(PyExc_ValueError, ctypes_dlerror());
++        const char *err = ctypes_dlerror();
++        if (!err)
++            PyErr_Format(PyExc_ValueError,
++                         "symbol '%s' not found",
++                         name);
++        else
++            PyErr_SetString(PyExc_ValueError, err);
  #endif
+         return NULL;
+     }
+@@ -3393,10 +3399,16 @@
+ #ifdef __CYGWIN__
+ /* dlerror() isn't very helpful on cygwin */
+         PyErr_Format(PyExc_AttributeError,
+-                     "function '%s' not found (%s) ",
++                     "function '%s' not found",
+                      name);
+ #else
+-        PyErr_SetString(PyExc_AttributeError, ctypes_dlerror());
++        const char *err = ctypes_dlerror();
++        if (!err)
++            PyErr_Format(PyExc_AttributeError,
++                         "function '%s' not found",
++                         name);
++        else
++            PyErr_SetString(PyExc_AttributeError, err);
+ #endif
+         Py_DECREF(ftuple);
+         return NULL;
+--- a/Lib/ctypes/util.py
++++ b/Lib/ctypes/util.py
+@@ -239,7 +239,16 @@
+             return res.group(1)
  
- #ifdef __cplusplus
---- Python-2.7.3.orig/Lib/distutils/command/build_ext.py	2010-09-10 16:03:17.000000000 -0400
-+++ Python-2.7.3/Lib/distutils/command/build_ext.py	2010-12-26 10:07:28.492632349 -0500
+         def find_library(name):
+-            return _findSoname_ldconfig(name) or _get_soname(_findLib_gcc(name))
++            from glob import glob
++            paths = ['/lib', '/usr/lib']
++            if os.environ.has_key('LD_LIBRARY_PATH'):
++                paths = os.environ['LD_LIBRARY_PATH'].split(':') + paths
++            for path in paths:
++                for lib in glob("%s/lib%s.so.*" % (path, name)):
++                    rpath = os.path.realpath(lib)
++                    if os.path.isfile(rpath):
++                        return rpath
++            return None
+ 
+ ################################################################
+ # test code
+--- a/Lib/distutils/command/build_ext.py
++++ b/Lib/distutils/command/build_ext.py
 @@ -435,7 +435,9 @@
          # "build" tree.
          outputs = []
@@ -98,8 +127,8 @@
  
          """Walk the list of source files in 'sources', looking for SWIG
          interface (.i) files.  Run SWIG on all that are found, and
---- Python-2.7.3.orig//Lib/plat-linux3/regen 1970-01-01 01:00:00.000000000 +0100
-+++ Python-2.7.3/Lib/plat-linux3/regen 2001-08-09 14:48:17.000000000 +0200
+--- a/Lib/plat-linux3/regen
++++ b/Lib/plat-linux3/regen
 @@ -0,0 +1,8 @@
 +#! /bin/sh
 +case `uname` in
@@ -109,9 +138,8 @@
 +esac
 +set -v
 +h2py -i '(u_long)' /usr/include/sys/types.h /usr/include/netinet/in.h /usr/include/dlfcn.h
-diff -Nur '--exclude-from=diff-ignore' python-2.7.3.org/Lib/sitecustomize.py python-2.7.3/Lib/sitecustomize.py
---- python-2.7.3.org/Lib/sitecustomize.py	1970-01-01 01:00:00.000000000 +0100
-+++ python-2.7.3/Lib/sitecustomize.py	2012-04-08 23:23:39.000000000 +0200
+--- a/Lib/sitecustomize.py
++++ b/Lib/sitecustomize.py
 @@ -0,0 +1,45 @@
 +# OpenEmbedded sitecustomize.py (C) 2002-2008 Michael 'Mickey' Lauer <mlauer@vanille-media.de>
 +# GPLv2 or later
@@ -158,8 +186,8 @@ diff -Nur '--exclude-from=diff-ignore' python-2.7.3.org/Lib/sitecustomize.py pyt
 +    __enableDefaultEncoding()
 +    __registerExitHandler()
 +    __enableReadlineSupport()
---- a/Modules/_ctypes/libffi/configure.ac	2014-12-10 17:59:51.000000000 +0200
-+++ b/Modules/_ctypes/libffi/configure.ac	2015-04-30 01:40:56.871979700 +0300
+--- a/Modules/_ctypes/libffi/configure.ac
++++ b/Modules/_ctypes/libffi/configure.ac
 @@ -3,7 +3,7 @@
  # file from libffi - slightly patched for Python's ctypes
  #
@@ -181,18 +209,16 @@ diff -Nur '--exclude-from=diff-ignore' python-2.7.3.org/Lib/sitecustomize.py pyt
  
  if test "x$GCC" = "xyes"; then
    CFLAGS="$CFLAGS -fexceptions"
-diff -Nur '--exclude-from=diff-ignore' python-2.7.3.org/Modules/_ctypes/libffi/fficonfig.py.in python-2.7.3/Modules/_ctypes/libffi/fficonfig.py.in
---- python-2.7.3.org/Modules/_ctypes/libffi/fficonfig.py.in	2010-01-16 19:05:15.000000000 +0100
-+++ python-2.7.3/Modules/_ctypes/libffi/fficonfig.py.in	2012-04-09 19:38:57.000000000 +0200
+--- a/Modules/_ctypes/libffi/fficonfig.py.in
++++ b/Modules/_ctypes/libffi/fficonfig.py.in
 @@ -32,4 +32,4 @@
  
  ffi_sources += ffi_platforms['@TARGET@']
  
 -ffi_cflags = '@CFLAGS@'
 +ffi_cflags = '@CFLAGS@ -DPIC'
-diff -Nur python-2.7.3.org/Python/compile.c python-2.7.3/Python/compile.c
---- python-2.7.3.org/Python/compile.c	2010-06-22 23:47:04.000000000 +0200
-+++ python-2.7.3/Python/compile.c	2012-09-17 21:55:58.776875344 +0200
+--- a/Python/compile.c
++++ b/Python/compile.c
 @@ -32,7 +32,7 @@
  #include "symtable.h"
  #include "opcode.h"
@@ -202,9 +228,8 @@ diff -Nur python-2.7.3.org/Python/compile.c python-2.7.3/Python/compile.c
  
  #define DEFAULT_BLOCK_SIZE 16
  #define DEFAULT_BLOCKS 8
-diff -Nur '--exclude-from=diff-ignore' python-2.7.3.org/Modules/termios.c python-2.7.3/Modules/termios.c
---- python-2.7.3.org/Modules/termios.c	2010-05-09 17:15:40.000000000 +0200
-+++ python-2.7.3/Modules/termios.c	2012-04-09 18:43:41.000000000 +0200
+--- a/Modules/termios.c
++++ b/Modules/termios.c
 @@ -17,6 +17,12 @@
  #include <termio.h>
  #endif
@@ -218,10 +243,31 @@ diff -Nur '--exclude-from=diff-ignore' python-2.7.3.org/Modules/termios.c python
  
  /* HP-UX requires that this be included to pick up MDCD, MCTS, MDSR,
   * MDTR, MRI, and MRTS (appearantly used internally by some things
-diff -urN Python-2.7.3/setup.py ltib/rpm/BUILD/Python-2.7.3/setup.py
---- Python-2.7.3/setup.py	2011-06-11 11:46:28.000000000 -0400
-+++ ltib/rpm/BUILD/Python-2.7.3/setup.py	2011-11-14 12:13:02.175758583 -0500
-@@ -159,6 +159,7 @@
+--- a/setup.py
++++ b/setup.py
+@@ -34,6 +34,21 @@
+ 
+ # This global variable is used to hold the list of modules to be disabled.
+ disabled_module_list = []
++
++def target_is_64bit_platform ():
++    """
++    In case of cross-compile, some modules are not build as setup checks if HOST
++    is 64bit and not TARGET.
++    As python was built for TARGET we can check this in pyconfig.h in this way:
++        Sizeof LONG on a 32 bit platform is 4 bytes
++        Sizeof LONG on a 64 bit platform is 8 bytes
++    """
++    pyconf = open("pyconfig.h").read()
++    aux = re.search(r"#s*define\s+SIZEOF_LONG\s+8\s*", pyconf)
++    if aux is not None:
++        return True
++    else:
++        return False
+ 
+ def add_dir_to_list(dirlist, dir):
+     """Add the directory 'dir' to the list 'dirlist' (at the front) if
+@@ -159,6 +174,7 @@
      def __init__(self, dist):
          build_ext.__init__(self, dist)
          self.failed = []
@@ -229,7 +275,7 @@ diff -urN Python-2.7.3/setup.py ltib/rpm/BUILD/Python-2.7.3/setup.py
  
      def build_extensions(self):
  
-@@ -294,6 +295,14 @@
+@@ -294,6 +310,14 @@
                            (ext.name, sys.exc_info()[1]))
              self.failed.append(ext.name)
              return
@@ -244,7 +290,15 @@ diff -urN Python-2.7.3/setup.py ltib/rpm/BUILD/Python-2.7.3/setup.py
          # Workaround for Mac OS X: The Carbon-based modules cannot be
          # reliably imported into a command-line Python
          if 'Carbon' in ext.extra_link_args:
-@@ -440,11 +449,18 @@
+@@ -334,6 +358,7 @@
+             self.failed.append(ext.name)
+             self.announce('*** WARNING: renaming "%s" since importing it'
+                           ' failed: %s' % (ext.name, why), level=3)
++            return
+             assert not self.inplace
+             basename, tail = os.path.splitext(ext_filename)
+             newname = basename + "_failed" + tail
+@@ -439,11 +464,18 @@
  
      def detect_modules(self):
          # Ensure that /usr/local is always used
@@ -268,17 +322,30 @@ diff -urN Python-2.7.3/setup.py ltib/rpm/BUILD/Python-2.7.3/setup.py
          self.add_multiarch_paths()
  
          # Add paths specified in the environment variables LDFLAGS and
-@@ -482,7 +498,8 @@
+@@ -480,16 +512,16 @@
+                     for directory in reversed(options.dirs):
                          add_dir_to_list(dir_list, directory)
  
-         if os.path.normpath(sys.prefix) != '/usr' \
+-        if os.path.normpath(sys.prefix) != '/usr' \
 -                and not sysconfig.get_config_var('PYTHONFRAMEWORK'):
-+                and not sysconfig.get_config_var('PYTHONFRAMEWORK') \
-+                and not self.cross_compile:
++#        if os.path.normpath(sys.prefix) != '/usr' \
++#                and not sysconfig.get_config_var('PYTHONFRAMEWORK'):
              # OSX note: Don't add LIBDIR and INCLUDEDIR to building a framework
              # (PYTHONFRAMEWORK is set) to avoid # linking problems when
              # building a framework with different architectures than
-@@ -500,18 +517,22 @@
+             # the one that is currently installed (issue #7473)
+-            add_dir_to_list(self.compiler.library_dirs,
+-                            sysconfig.get_config_var("LIBDIR"))
+-            add_dir_to_list(self.compiler.include_dirs,
+-                            sysconfig.get_config_var("INCLUDEDIR"))
++#            add_dir_to_list(self.compiler.library_dirs,
++#                            sysconfig.get_config_var("LIBDIR"))
++#            add_dir_to_list(self.compiler.include_dirs,
++#                            sysconfig.get_config_var("INCLUDEDIR"))
+ 
+         try:
+             have_unicode = unicode
+@@ -499,18 +531,22 @@
          # lib_dirs and inc_dirs are used to search for files;
          # if a file is found in one of those directories, it can
          # be assumed that no additional -I,-L directives are needed.
@@ -311,10 +378,11 @@ diff -urN Python-2.7.3/setup.py ltib/rpm/BUILD/Python-2.7.3/setup.py
          exts = []
          missing = []
  
-@@ -520,6 +541,18 @@
+@@ -518,6 +554,18 @@
+         config_h_vars = sysconfig.parse_config_h(open(config_h))
  
          srcdir = sysconfig.get_config_var('srcdir')
- 
++
 +        # add paths from CFLAGS and LDFLAGS
 +        cflags, ldflags = sysconfig.get_config_vars(
 +                    'CFLAGS', 'LDFLAGS')
@@ -326,11 +394,33 @@ diff -urN Python-2.7.3/setup.py ltib/rpm/BUILD/Python-2.7.3/setup.py
 +            if item.startswith('-L'):
 +                lib_dirs.append(item[2:])
 +        print (inc_dirs)
-+
+ 
          # Check for AtheOS which has libraries in non-standard locations
          if host_platform == 'atheos':
-             lib_dirs += ['/system/libs', '/atheos/autolnk/lib']
-@@ -1106,7 +1139,14 @@
+@@ -696,7 +744,7 @@
+         exts.append( Extension('audioop', ['audioop.c']) )
+ 
+         # Disabled on 64-bit platforms
+-        if sys.maxint != 9223372036854775807L:
++        if not target_is_64bit_platform():
+             # Operations on images
+             exts.append( Extension('imageop', ['imageop.c']) )
+         else:
+@@ -761,12 +809,10 @@
+                 pass # Issue 7384: Already linked against curses or tinfo.
+             elif curses_library:
+                 readline_libs.append(curses_library)
+-            elif self.compiler.find_library_file(lib_dirs +
+-                                                     ['/usr/lib/termcap'],
++            elif self.compiler.find_library_file(lib_dirs,
+                                                      'termcap'):
+                 readline_libs.append('termcap')
+             exts.append( Extension('readline', ['readline.c'],
+-                                   library_dirs=['/usr/lib/termcap'],
+                                    extra_link_args=readline_extra_link_args,
+                                    libraries=readline_libs) )
+         else:
+@@ -1105,7 +1151,13 @@
                               '/usr/local/include/sqlite3',
                             ]
          if cross_compiling:
@@ -342,11 +432,10 @@ diff -urN Python-2.7.3/setup.py ltib/rpm/BUILD/Python-2.7.3/setup.py
 +                sqlite_inc_paths = [mydir + '/include' ]
 +            else:
 +                sqlite_inc_paths = []
-+
          MIN_SQLITE_VERSION_NUMBER = (3, 0, 8)
          MIN_SQLITE_VERSION = ".".join([str(x)
                                      for x in MIN_SQLITE_VERSION_NUMBER])
-@@ -1146,12 +1186,22 @@
+@@ -1145,12 +1197,21 @@
                      print "sqlite: %s had no SQLITE_VERSION"%(f,)
  
          if sqlite_incdir:
@@ -371,20 +460,90 @@ diff -urN Python-2.7.3/setup.py ltib/rpm/BUILD/Python-2.7.3/setup.py
 +                    sqlite_dirs_to_check = [mydir + '/lib' ]
 +                else:
 +                    sqlite_dirs_to_check = []
-+
              sqlite_libfile = self.compiler.find_library_file(
                                  sqlite_dirs_to_check + lib_dirs, 'sqlite3')
              if sqlite_libfile:
-@@ -2029,8 +2079,14 @@
+@@ -1228,8 +1289,10 @@
+                                           libraries=libraries))
+                 else:
+                     exts.append(Extension('bsddb185', ['bsddbmodule.c']))
+-            else:
+-                missing.append('bsddb185')
++            # If a newer version is detected don't report an useless
++            # warning
++            #else:
++            #    missing.append('bsddb185')
+         else:
+             missing.append('bsddb185')
+ 
+@@ -1527,7 +1590,7 @@
+                 missing.append('_codecs_%s' % loc)
+ 
+         # Dynamic loading module
+-        if sys.maxint == 0x7fffffff:
++        if not target_is_64bit_platform():
+             # This requires sizeof(int) == sizeof(long) == sizeof(char*)
+             dl_inc = find_file('dlfcn.h', [], inc_dirs)
+             if (dl_inc is not None) and (host_platform not in ['atheos']):
+@@ -1614,8 +1677,9 @@
+         if host_platform == 'sunos5':
+             # SunOS specific modules
+             exts.append( Extension('sunaudiodev', ['sunaudiodev.c']) )
+-        else:
+-            missing.append('sunaudiodev')
++        # If platform is not sunos warning is useless
++        #else:
++        #    missing.append('sunaudiodev')
+ 
+         if host_platform == 'darwin':
+             # _scproxy
+@@ -1728,8 +1792,10 @@
+         # Call the method for detecting whether _tkinter can be compiled
+         self.detect_tkinter(inc_dirs, lib_dirs)
+ 
+-        if '_tkinter' not in [e.name for e in self.extensions]:
+-            missing.append('_tkinter')
++        # tkinter module will not be avalaible as yocto
++        # doesn't have tk integrated (yet)
++        #if '_tkinter' not in [e.name for e in self.extensions]:
++        #    missing.append('_tkinter')
+ 
+ ##         # Uncomment these lines if you want to play with xxmodule.c
+ ##         ext = Extension('xx', ['xxmodule.c'])
+@@ -1915,22 +1981,6 @@
+             if dir not in include_dirs:
+                 include_dirs.append(dir)
+ 
+-        # Check for various platform-specific directories
+-        if host_platform == 'sunos5':
+-            include_dirs.append('/usr/openwin/include')
+-            added_lib_dirs.append('/usr/openwin/lib')
+-        elif os.path.exists('/usr/X11R6/include'):
+-            include_dirs.append('/usr/X11R6/include')
+-            added_lib_dirs.append('/usr/X11R6/lib64')
+-            added_lib_dirs.append('/usr/X11R6/lib')
+-        elif os.path.exists('/usr/X11R5/include'):
+-            include_dirs.append('/usr/X11R5/include')
+-            added_lib_dirs.append('/usr/X11R5/lib')
+-        else:
+-            # Assume default location for X11
+-            include_dirs.append('/usr/X11/include')
+-            added_lib_dirs.append('/usr/X11/lib')
+-
+         # If Cygwin, then verify that X is installed before proceeding
+         if host_platform == 'cygwin':
+             x11_inc = find_file('X11/Xlib.h', [], include_dirs)
+@@ -2028,8 +2078,15 @@
  
                  # Pass empty CFLAGS because we'll just append the resulting
                  # CFLAGS to Python's; -g or -O2 is to be avoided.
 -                cmd = "cd %s && env CFLAGS='' '%s/configure' %s" \
 -                      % (ffi_builddir, ffi_srcdir, " ".join(config_args))
 +                if self.cross_compile:
-+                    cmd = "cd %s && env CFLAGS='' %s/configure --host=%s %s" \
++                    cmd = "cd %s && env CFLAGS='' %s/configure --host=%s --build=%s %s" \
 +                          % (ffi_builddir, ffi_srcdir,
 +                             os.environ.get('HOSTARCH'),
++                             os.environ.get('BUILDARCH'),
 +                             " ".join(config_args))
 +                else:
 +                    cmd = "cd %s && env CFLAGS='' '%s/configure' %s" \

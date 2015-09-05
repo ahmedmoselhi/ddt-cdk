@@ -176,7 +176,7 @@ libplist;1.10;libplist-1.10;libplist-1.10.tar.gz;extract:libplist-1.10.tar.gz
 # PYTHON
 #
 host_python;2.7.9;host-python-2.7.9;Python-2.7.9.tar.xz;extract:Python-2.7.9.tar.xz;move:Python-2.7.9:host-python-2.7.9;patch:python_2.7.9-xcompile.patch;patch:python_2.7.9-revert_use_of_sysconfigdata.patch;patch:python_2.7.9.patch;patch:python_2.7.9-pgettext.patch
-python;2.7.9;python-2.7.9;Python-2.7.9.tar.xz;extract:Python-2.7.9.tar.xz;move:Python-2.7.9:python-2.7.9;patch:python_2.7.9-xcompile.patch;patch:python_2.7.9-revert_use_of_sysconfigdata.patch;patch:python_2.7.9.patch;patch:python_2.7.9-pgettext.patch;patch:python_2.7.9-disable-certificate-verification.patch
+python;2.7.9;python-2.7.9;Python-2.7.9.tar.xz;extract:Python-2.7.9.tar.xz;move:Python-2.7.9:python-2.7.9;patch:python_2.7.9-xcompile.patch;patch:python_2.7.9-revert_use_of_sysconfigdata.patch;patch:python_2.7.9.patch;patch:python_2.7.9-pgettext.patch
 python_gdata;2.0.18;gdata-2.0.18;gdata-2.0.18.tar.gz;extract:gdata-2.0.18.tar.gz
 python_elementtree;1.2.6-20050316;elementtree-1.2.6-20050316;elementtree-1.2.6-20050316.tar.gz;extract:elementtree-1.2.6-20050316.tar.gz
 python_lxml;2.2.8;lxml-2.2.8;lxml-2.2.8.tgz;extract:lxml-2.2.8.tgz

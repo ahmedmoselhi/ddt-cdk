@@ -22,13 +22,7 @@ $(D)/host_python: @DEPENDS_host_python@
 			--without-cxx-main \
 			--with-threads \
 		&& \
-		$(MAKE) \
-			TARGET_OS=$(build) \
-			PYTHON_MODULES_INCLUDE="$(hostprefix)/include" \
-			PYTHON_MODULES_LIB="$(hostprefix)/lib" \
-			HOSTPYTHON=./hostpython \
-			HOSTPGEN=./hostpgen \
-			all install && \
+		$(MAKE) all install && \
 		cp ./hostpgen $(hostprefix)/bin/pgen ) && \
 	@CLEANUP_host_python@
 	touch $@
@@ -71,7 +65,8 @@ $(D)/python: $(D)/bootstrap $(D)/host_python $(D)/libncurses $(D)/zlib $(OPENSSL
 		&& \
 		$(MAKE) $(MAKE_OPTS) \
 			PYTHON_MODULES_INCLUDE="$(targetprefix)/usr/include" \
-			PYTHON_MODULES_LIB="$(targetprefix)/usr/lib $(targetprefix)/lib" \
+			PYTHON_MODULES_LIB="$(targetprefix)/usr/lib" \
+			PYTHON_XCOMPILE_DEPENDENCIES_PREFIX="$(targetprefix)" \
 			CROSS_COMPILE_TARGET=yes \
 			CROSS_COMPILE=$(target) \
 			MACHDEP=linux2 \

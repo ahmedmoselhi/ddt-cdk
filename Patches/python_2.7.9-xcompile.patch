@@ -1,5 +1,47 @@
---- Python-2.7.9.orig/Makefile.pre.in
-+++ Python-2.7.9/Makefile.pre.in
+--- a/configure.ac	2015-04-29 20:35:29.617099757 +0300
++++ b/configure.ac	2015-04-29 20:38:51.470100684 +0300
+@@ -5,7 +5,7 @@
+ # Set VERSION so we only need to edit in one place (i.e., here)
+ m4_define(PYTHON_VERSION, 2.7)
+ 
+-AC_PREREQ(2.65)
++AC_PREREQ(2.64)
+ 
+ AC_REVISION($Revision$)
+ AC_INIT(python, PYTHON_VERSION, http://bugs.python.org/)
+@@ -3335,7 +3335,7 @@
+ 
+ AC_MSG_RESULT($ac_cv_buggy_getaddrinfo)
+ 
+-if test $have_getaddrinfo = no -o "$ac_cv_buggy_getaddrinfo" = yes
++if test $have_getaddrinfo = no -o "$ac_cv_buggy_getaddrinfo" = yes -a x"$cross_compiling" != "xyes"
+ then
+ 	if test $ipv6 = yes
+ 	then
+--- a/configure
++++ b/configure
+@@ -14485,7 +14485,7 @@
+ $as_echo "$ac_cv_have_long_long_format" >&6; }
+ fi
+ 
+-if test "$ac_cv_have_long_long_format" = yes
++if test "$ac_cv_have_long_long_format" != no
+ then
+ 
+ $as_echo "#define PY_FORMAT_LONG_LONG \"ll\"" >>confdefs.h
+--- a/Include/pyport.h
++++ b/Include/pyport.h
+@@ -883,7 +883,7 @@
+  * rather than waiting for integer multiplication to trigger bogus
+  * overflows.
+  */
+-#error "LONG_BIT definition appears wrong for platform (bad gcc/glibc config?)."
++/* #error "LONG_BIT definition appears wrong for platform (bad gcc/glibc config?)." */
+ #endif
+ 
+ #ifdef __cplusplus
+--- a/Makefile.pre.in
++++ b/Makefile.pre.in
 @@ -194,6 +194,7 @@
  
  PYTHON=		python$(EXE)
@@ -91,13 +133,3 @@
  	   	--prefix=$(prefix) \
  		--install-scripts=$(BINDIR) \
  		--install-platlib=$(DESTSHARED) \
---- Python-2.7.9.orig/setup.py
-+++ Python-2.7.9/setup.py
-@@ -334,6 +334,7 @@ class PyBuildExt(build_ext):
-             self.failed.append(ext.name)
-             self.announce('*** WARNING: renaming "%s" since importing it'
-                           ' failed: %s' % (ext.name, why), level=3)
-+            return
-             assert not self.inplace
-             basename, tail = os.path.splitext(ext_filename)
-             newname = basename + "_failed" + tail
