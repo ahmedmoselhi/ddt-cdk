@@ -182,17 +182,20 @@ $(D)/neutrino-mp-cst-next.do_prepare: | $(NEUTRINO_DEPS) libstb-hal-cst-next
 	rm -rf $(sourcedir)/neutrino-mp-cst-next
 	rm -rf $(sourcedir)/neutrino-mp-cst-next.org
 	rm -rf $(N_OBJDIR)
-	[ -d "$(archivedir)/neutrino-mp-cst-next.git" ] && \
-	(cd $(archivedir)/neutrino-mp-cst-next.git; git pull; cd "$(buildprefix)";); \
-	[ -d "$(archivedir)/neutrino-mp-cst-next.git" ] || \
-	git clone https://github.com/Duckbox-Developers/neutrino-mp-cst-next.git $(archivedir)/neutrino-mp-cst-next.git; \
-	cp -ra $(archivedir)/neutrino-mp-cst-next.git $(sourcedir)/neutrino-mp-cst-next; \
-	cp -ra $(sourcedir)/neutrino-mp-cst-next $(sourcedir)/neutrino-mp-cst-next.org
+	[ -d "$(sourcedir)/neutrino-mp-cst-next" ] && \
+        (cd $(sourcedir)/neutrino-mp-cst-next; git pull; cd "$(buildprefix)";); \
+	[ -d "$(sourcedir)/neutrino-mp-cst-next" ] || \
+	git clone git@github.com:lexandr0s/nmp-sdl.git $(sourcedir)/neutrino-mp-cst-next; \
 	for i in $(NEUTRINO_MP_CST_NEXT_PATCHES); do \
 		echo "==> Applying Patch: $(subst $(PATCHES)/,'',$$i)"; \
 		set -e; cd $(sourcedir)/neutrino-mp-cst-next && patch -p1 -i $$i; \
 	done;
 	touch $@
+
+
+
+#                       --with-boxtype=$(BOXTYPE) 
+#                       --with-boxmodel=$(BOXTYPE)
 
 $(D)/neutrino-mp-cst-next.config.status:
 	rm -rf $(N_OBJDIR)
@@ -203,9 +206,9 @@ $(D)/neutrino-mp-cst-next.config.status:
 		$(sourcedir)/neutrino-mp-cst-next/configure \
 			--build=$(build) \
 			--host=$(target) \
-			$(N_CONFIG_OPTS) \
 			--with-boxtype=$(BOXTYPE) \
 			--with-boxmodel=$(BOXTYPE) \
+			$(N_CONFIG_OPTS) \
 			--enable-upnp \
 			--enable-ffmpegdec \
 			--enable-giflib \
