@@ -133,10 +133,20 @@ swapon /dev/ramzswap0
    #timefix
    date -s "200901011200"
 
+   if [ ! -d /var/tuxbox/config/.conf ]
+        then
+                echo "Create .conf dir"
+                mkdir /var/tuxbox/config/.conf
+   fi
+
    /etc/init.d/cam start
 
    echo "run" > /dev/vfd
    echo "LOADING neutrino"
+
+
+
+
 
 
 if [ -d /var/pkg ]; then
@@ -146,10 +156,9 @@ if [ -d /var/pkg ]; then
         opkg install /var/pkg/libncurses*
         opkg install /var/pkg/mc*
         opkg install /var/pkg/nano*
-	opkg install /var/pkg/openssl*
+        opkg install /var/pkg/openssl*
         opkg install /var/pkg/libuuid*
         opkg install /var/pkg/wget*
-
         rm -rf /var/pkg
 fi
 
