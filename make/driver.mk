@@ -19,6 +19,7 @@ $(D)/driver: $(driverdir)/Makefile $(D)/bootstrap $(D)/linux-kernel $(D)/wpa_sup
 		BIN_DEST=$(targetprefix)/bin \
 		INSTALL_MOD_PATH=$(targetprefix) \
 		install
+	[ -e "$(archivedir)/pti_np/pti.ko" ] && \
 	cp -af $(archivedir)/pti_np/pti.ko $(targetprefix)/lib/modules/$(KERNELVERSION)/extra/pti/pti.ko
 	$(DEPMOD) -ae -b $(targetprefix) -F $(buildprefix)/$(KERNEL_DIR)/System.map -r $(KERNELVERSION)
 	touch $@
