@@ -1,0 +1,5 @@
+# example config file, copy to opkg.conf and edit
+src server http://server/dist/spark
+# add an optional cache directory, important if not enough flash memory is available!
+# directory must exist before executing of opkg
+option cache /tmp/media/sda1/.opkg
