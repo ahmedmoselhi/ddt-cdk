@@ -18,6 +18,9 @@ fi
 
 insmod $MODDIR/e2_proc.ko
 
+# start automounter with umount timeout of 5 seconds
+   insmod $MODDIR/autofs4.ko
+   /usr/sbin/automount --timeout=5 /autofs file /etc/auto.usb
 
 if [ ! -e /var/etc/.firstboot ]; then
 
@@ -65,7 +68,6 @@ swapon /dev/ramzswap0
    echo "init AVS"
    insmod $MODDIR/avs.ko type=avs_pio
 
-   player=`cat /proc/stb/player/version`
    player=`cat /proc/stb/player/version | awk '{ print substr( $0, length($0) - 2, length($0) ) }'`
    echo "init player $player"
    insmod $MODDIR/mmelog.ko
@@ -93,11 +95,11 @@ swapon /dev/ramzswap0
 		insmod $MODDIR/spark7162.ko UnionTunerType=t
    fi
 
-   insmod $MODDIR/pti.ko waitMS=5
+   insmod $MODDIR/pti.ko
    insmod $MODDIR/stm_monitor.ko
    insmod $MODDIR/stmsysfs.ko
-   insmod $MODDIR/stmdvb.ko
-   insmod $MODDIR/player2.ko discardlateframe=1 noaudiosync=1
+   insmod $MODDIR/stmdvb.ko swts=1
+   insmod $MODDIR/player2.ko discardlateframe=1
    insmod $MODDIR/sth264pp.ko
    insmod $MODDIR/stmalloc.ko
    insmod $MODDIR/platform.ko
@@ -118,11 +120,6 @@ swapon /dev/ramzswap0
    mkdir -p /var/run/lirc
    /usr/bin/lircd -u
 
-#   major=$(awk "\$2==\"sparkid\" {print \$1}" /proc/devices)
-#   rm -f /dev/sparkid
-#   mknod /dev/sparkid c $major 0
-#   rm /f /dev/dvb/adapter0/ca1
-#   mknod /dev/dvb/adapter0/ca1 c 212 22
 
 # Module aus modules.extra laden
    [ -f /var/etc/modules.extra ] && eval `sed -e 's/#.*//' -e '/^\s*$/d' -e 's/^\(.*\)/insmod \0;/' < /var/etc/modules.extra`
@@ -135,10 +132,7 @@ swapon /dev/ramzswap0
    mknod /dev/dvb/adapter0/ca2 c 212 38
 
 
-# start automounter with umount timeout of 5 seconds
-   mkdir -p /tmp/autofs
-   insmod $MODDIR/autofs4.ko
-   /usr/sbin/automount --ghost --timeout=5 /tmp/autofs file /etc/auto.usb
+
 
 #   echo "starting vsftpd"
 #   /etc/init.d/vsftpd start
@@ -166,8 +160,10 @@ swapon /dev/ramzswap0
    # Set Display Time
    (sleep 25;fp_control -s `date +"%H:%M:%S %d-%m-%Y"`) &
 
-   #tuner workaround
-   export FE_OFFSET=1
+
+
+
+
 
    /etc/init.d/cam start
 

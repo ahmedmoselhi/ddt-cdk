@@ -16,11 +16,10 @@ if [ -e /var/etc/.firstboot ]; then
    touch /dev/.devfsd
 fi
 
-   /etc/init.d/mountvirtfs start
+/etc/init.d/mountvirtfs start
+/etc/init.d/portmap start
 
-   /etc/init.d/portmap start
-
-  insmod $MODDIR/e2_proc.ko
+insmod $MODDIR/e2_proc.ko
 
 # start automounter with umount timeout of 5 seconds
    insmod $MODDIR/autofs4.ko
@@ -35,11 +34,12 @@ if [ ! -e /var/etc/.firstboot ]; then
 #   echo "starting telnetd"
 #   /usr/sbin/telnetd -l /bin/autologin
 
+##Make ramzswap
 swap_size=$(($(grep MemTotal /proc/meminfo | awk ' { print $2 } ')/4))
 insmod $MODDIR/ramzswap.ko disksize_kb=$swap_size
 mkswap /dev/ramzswap0
 swapon /dev/ramzswap0
-
+###################
 
    echo "init stmfb"
    insmod $MODDIR/stmcore-display-sti7111.ko
@@ -81,10 +81,18 @@ swapon /dev/ramzswap0
    insmod $MODDIR/stmvbi.ko
    insmod $MODDIR/pseudocard.ko
    insmod $MODDIR/stv090x.ko
+
+   if [ ! -d /var/tuxbox/config/.conf ]
+	then
+		echo "Create .conf dir"
+		mkdir /var/tuxbox/config/.conf
+   fi
+
+
    insmod $MODDIR/pti.ko
    insmod $MODDIR/stm_monitor.ko
    insmod $MODDIR/stmsysfs.ko
-   insmod $MODDIR/stmdvb.ko
+   insmod $MODDIR/stmdvb.ko swts=1
    insmod $MODDIR/player2.ko discardlateframe=1
    insmod $MODDIR/sth264pp.ko
    insmod $MODDIR/stmalloc.ko
@@ -98,19 +106,15 @@ swapon /dev/ramzswap0
 
    echo "init lircd"
    mkdir -p /var/run/lirc
-   /usr/bin/lircd
+   /usr/bin/lircd -u
 
-#   major=$(awk "\$2==\"sparkid\" {print \$1}" /proc/devices)
-#   rm -f /dev/sparkid
-#   mknod /dev/sparkid c $major 0
 
    /bin/evremote2 10 100 &
 
 # Module aus modules.extra laden
    [ -f /var/etc/modules.extra ] && eval `sed -e 's/#.*//' -e '/^\s*$/d' -e 's/^\(.*\)/insmod \0;/' < /var/etc/modules.extra`
 
-#   echo "starting telnetd"
-#   /usr/sbin/telnetd -l /bin/autologin
+
 #   /etc/init.d/vsftpd start
    /usr/sbin/inetd
 
@@ -133,11 +137,11 @@ swapon /dev/ramzswap0
    #timefix
    date -s "200901011200"
 
-   if [ ! -d /var/tuxbox/config/.conf ]
-        then
-                echo "Create .conf dir"
-                mkdir /var/tuxbox/config/.conf
-   fi
+
+
+
+
+
 
    /etc/init.d/cam start
 
@@ -150,25 +154,20 @@ swapon /dev/ramzswap0
 
 
 if [ -d /var/pkg ]; then
-        opkg install /var/pkg/glibc*
-        opkg install /var/pkg/libz*
-        opkg install /var/pkg/libglib*
-        opkg install /var/pkg/libncurses*
-        opkg install /var/pkg/mc*
-        opkg install /var/pkg/nano*
-        opkg install /var/pkg/openssl*
-        opkg install /var/pkg/libuuid*
-        opkg install /var/pkg/wget*
-        rm -rf /var/pkg
+	opkg install /var/pkg/glibc*
+	opkg install /var/pkg/libz*
+	opkg install /var/pkg/libglib*
+	opkg install /var/pkg/libncurses*
+	opkg install /var/pkg/mc*
+	opkg install /var/pkg/nano*
+	opkg install /var/pkg/openssl*
+	opkg install /var/pkg/libuuid*
+	opkg install /var/pkg/wget*
+	rm -rf /var/pkg
 fi
 
 
-
-
-
-
-   killall -9 showiframe
-
+  killall -9 showiframe
 
    until false
    do
