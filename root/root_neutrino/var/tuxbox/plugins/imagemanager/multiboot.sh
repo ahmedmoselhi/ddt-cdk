@@ -5,11 +5,14 @@
 #by Lexandros 08.2015 (thanks for j00zek and  Vasiliks)
 #
 
-/var/tuxbox/plugins/kill_lock.sh > dev/null &
 
 GOTERROR=0
 curdir=`dirname $(readlink -f $0))`
 MSGBOX="$curdir/msgbox"
+
+$curdir/kill_lock.sh > dev/null &
+
+
 
 LANG='en'
 if grep -qs 'russkij' /var/tuxbox/config/neutrino.conf ; then LANG='ru' ; fi
@@ -133,7 +136,8 @@ fi
 
 if [ $GOTERROR -gt 0 ]; then
 	echo error
-	$MSGBOX msg=/tmp/mboot.log title="ERROR!!!" timeout=20 select="OK"
+	killall -9 msgbox > /dev/null
+	$MSGBOX msg=/tmp/mboot.log title="ERROR!!!" timeout=20 select="OK" refresh=0
 	exit 1
 else
 	
